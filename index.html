@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>محمّل الفيديو — بأعلى جودة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1F33; --deep:#12395E; --sea:#1F7A8C; --mist:#E6EEF4; --white:#fff;
+  --signal:#FF5A5F; --muted:#5B7083; --line:#C9D6E0;
+}
+@media (prefers-color-scheme:dark){
+  :root{--ink:#E6EEF4; --deep:#0A1B2D; --mist:#06121F; --white:#0F2540; --muted:#8FA6B8; --line:#1E3A57; --sea:#3FB0C4}
+}
+*{box-sizing:border-box;margin:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--mist);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;line-height:1.7}
+header{background:#0B1F33;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:700;font-size:1.1rem}
+.credit{font-size:.9rem;color:#9FD3DD}
+.credit b{color:#fff}
+.hero{background:#0B1F33;color:#fff;padding:36px 20px 90px;text-align:center}
+.hero h1{font-size:clamp(1.7rem,6vw,2.8rem);font-weight:700;line-height:1.35;max-width:18ch;margin:0 auto 12px}
+.hero p{color:#B7C9D8;max-width:44ch;margin:0 auto}
+main{width:min(720px,92%);margin:-56px auto 40px;flex:1}
+.box{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:18px}
+.row{display:flex;gap:10px}
+input{flex:1;min-width:0;font:inherit;padding:14px;border:2px solid var(--line);border-radius:10px;background:transparent;color:var(--ink);direction:ltr;text-align:left}
+input:focus,button:focus-visible,a:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:14px 22px;background:var(--signal);color:#fff;cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+button:disabled{opacity:.6;cursor:wait}
+.sites{margin-top:12px;color:var(--muted);font-size:.85rem}
+#msg{margin-top:12px;color:var(--signal);font-weight:500}
+#result{display:none;margin-top:16px}
+.meta{display:flex;gap:14px;align-items:flex-start}
+.meta img{width:140px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;background:var(--line)}
+.meta h2{font-size:1rem;font-weight:700}
+.meta small{color:var(--muted)}
+.best{width:100%;margin-top:16px;background:var(--sea);padding:16px;font-size:1.05rem}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-top:12px}
+.opts .btn{background:transparent;color:var(--ink);border:2px solid var(--line);padding:10px}
+.opts .btn:hover{border-color:var(--sea)}
+footer{text-align:center;padding:22px;background:#0B1F33;color:#B7C9D8;font-size:.95rem}
+footer b{color:#fff;font-size:1.05rem}
+.note{font-size:.8rem;color:var(--muted);margin-top:14px}
+@media(max-width:480px){.row{flex-direction:column}.meta{flex-direction:column}.meta img{width:100%}}
+@media(prefers-reduced-motion:no-preference){button{transition:transform .1s}button:active{transform:scale(.98)}}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">محمّل الفيديو</span>
+  <span class="credit">تصميم وتطوير <b>م. حسان ثابت</b></span>
+</header>
+
+<section class="hero">
+  <h1>حمّل الفيديو من أي منصة بأعلى جودة</h1>
+  <p>الصق الرابط، اختر الدقة، وابدأ التحميل مباشرة.</p>
+</section>
+
+<main>
+  <div class="box">
+    <div class="row">
+      <input id="url" type="url" placeholder="https://..." aria-label="رابط الفيديو" autocomplete="off">
+      <button id="go">جلب الفيديو</button>
+    </div>
+    <p class="sites">يدعم يوتيوب، فيسبوك، إنستغرام، تيك توك، إكس (تويتر)، ريديت وغيرها.</p>
+    <p id="msg" role="alert"></p>
+
+    <div id="result">
+      <div class="meta">
+        <img id="thumb" alt="">
+        <div><h2 id="title"></h2><small id="info"></small></div>
+      </div>
+      <a id="best" class="btn best" href="#">تحميل بأعلى جودة متاحة</a>
+      <div class="opts" id="opts"></div>
+    </div>
+    <p class="note">حمّل فقط المحتوى الذي تملكه أو لديك إذن بتحميله، والتزم بشروط كل منصة.</p>
+  </div>
+</main>
+
+<footer>
+  تصميم وتطوير <b>م. حسان ثابت</b>
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const dl = (url, extra) => `/api/download?url=${encodeURIComponent(url)}&${extra}`;
+const fmt = s => s ? `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` : '';
+
+$('go').onclick = async () => {
+  const url = $('url').value.trim();
+  $('msg').textContent = ''; $('result').style.display = 'none';
+  if (!url) { $('msg').textContent = 'الصق رابط الفيديو أولًا.'; return; }
+  $('go').disabled = true; $('go').textContent = 'جارٍ الجلب…';
+  try {
+    const r = await fetch('/api/info?url=' + encodeURIComponent(url));
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'حدث خطأ');
+    $('thumb').src = d.thumbnail || '';
+    $('title').textContent = d.title || '';
+    $('info').textContent = [d.site, d.uploader, fmt(d.duration)].filter(Boolean).join(' • ');
+    $('best').href = dl(url, 'kind=video&height=best');
+    $('opts').innerHTML = d.heights.map(h =>
+      `<a class="btn" href="${dl(url, 'kind=video&height=' + h)}">${h}p</a>`).join('')
+      + `<a class="btn" href="${dl(url, 'kind=audio')}">صوت MP3</a>`;
+    $('result').style.display = 'block';
+  } catch (e) {
+    $('msg').textContent = e.message;
+  } finally {
+    $('go').disabled = false; $('go').textContent = 'جلب الفيديو';
+  }
+};
+$('url').addEventListener('keydown', e => e.key === 'Enter' && $('go').click());
+</script>
+</body>
+</html>
